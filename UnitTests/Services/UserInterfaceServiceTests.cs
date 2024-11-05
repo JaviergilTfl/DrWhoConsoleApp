@@ -10,6 +10,33 @@ namespace UnitTests.Services
     public class UserInterfaceServiceTests
     {
         [Theory, AutoDomainData]
+        public void Run_ShouldListMenu(
+               Mock<IDoctorService> mockDoctorService,
+               Mock<IConsoleService> mockConsoleService,
+               List<Doctor> doctors,
+               ListLogger<IUserInterfaceService> logger
+               )
+        {
+            // Arrange
+            mockConsoleService.SetupSequence(cs => cs.ReadLine())
+                .Returns("4"); // Exit after listing doctors
+
+            mockDoctorService.Setup(ds => ds.GetAllDoctors()).Returns(doctors);
+
+            var sut = new UserInterfaceService(mockDoctorService.Object, null, mockConsoleService.Object, logger);
+
+            // Act
+            sut.Run();
+
+            // Assert
+            mockConsoleService.Verify(x=>x.WriteLine("1. List doctors"),Times.Once);
+            mockConsoleService.Verify(x => x.WriteLine("2. List episodes by Year"), Times.Once);
+            mockConsoleService.Verify(x => x.WriteLine("3. Add a new doctor"), Times.Once);
+            mockConsoleService.Verify(x => x.WriteLine("4. Exit"), Times.Once);
+            mockConsoleService.Verify(x => x.Write("Enter your choice: "), Times.Once);
+        }
+
+        [Theory, AutoDomainData]
         public void Run_ShouldListDoctors_WhenChoiceIs1(
             Mock<IDoctorService> mockDoctorService,
             Mock<IConsoleService> mockConsoleService,

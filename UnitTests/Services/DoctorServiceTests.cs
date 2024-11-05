@@ -2,6 +2,9 @@ using DrWhoConsoleApp.DatabaseContext;
 using DrWhoConsoleApp.Models;
 using DrWhoConsoleApp.Services;
 using DrWhoConsoleApp.UnitTests;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Moq;
 
 namespace UnitTests.Services
 {
@@ -54,6 +57,8 @@ namespace UnitTests.Services
             // Assert
             dbContext.Doctors.Contains(doctor);
             dbContext.Doctors.Count().Equals(1);
+
+            Assert.NotNull(dbContext.Doctors.Find(doctor.DoctorId));
         }
     }
 }
