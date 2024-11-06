@@ -5,6 +5,6 @@ namespace DrWhoConsoleApp.Interfaces
     public interface IDoctorService
     {
         IEnumerable<Doctor> GetAllDoctors();
-        void AddDoctor(Doctor doctor);
+        Task<int> AddDoctor(Doctor doctor);
     }
 }

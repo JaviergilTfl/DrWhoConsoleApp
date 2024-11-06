@@ -4,7 +4,7 @@ namespace DrWhoConsoleApp.Interfaces
 {
     public interface IEpisodeService
     {
-        void AddEpisode(Episode episode);
+        Task<int> AddEpisode(Episode episode);
         IEnumerable<Episode> GetAllEpisodes();
         void RemoveEpisode(Episode episode);
     }

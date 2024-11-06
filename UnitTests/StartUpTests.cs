@@ -22,7 +22,7 @@ namespace UnitTests
 
             // Assert
             Assert.NotNull(serviceProvider.GetService<IServiceRunner>());
-            Assert.NotNull(serviceProvider.GetService<IDoctorWhoContext>());
+            Assert.NotNull(serviceProvider.GetService<DoctorWhoContext>());
             Assert.NotNull(serviceProvider.GetService<IConsoleService>());
             Assert.NotNull(serviceProvider.GetService<IDoctorService>());
             Assert.NotNull(serviceProvider.GetService<IEpisodeService>());

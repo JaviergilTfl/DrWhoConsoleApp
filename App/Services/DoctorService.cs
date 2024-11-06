@@ -2,16 +2,19 @@ using DrWhoConsoleApp.DatabaseContext;
 using DrWhoConsoleApp.Interfaces;
 using DrWhoConsoleApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DrWhoConsoleApp.Services
 {
     public class DoctorService : IDoctorService
     {
-        private readonly IDoctorWhoContext _context;
+        private readonly DoctorWhoContext _context;
+        private readonly ILogger<DoctorService> _logger;
 
-        public DoctorService(IDoctorWhoContext context)
+        public DoctorService(DoctorWhoContext context, ILogger<DoctorService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public IEnumerable<Doctor> GetAllDoctors()
@@ -22,10 +25,20 @@ namespace DrWhoConsoleApp.Services
                 .ToList();
         }
 
-        public void AddDoctor(Doctor doctor)
+        public async Task<int> AddDoctor(Doctor doctor)
         {
-            _context.Doctors.Add(doctor);
-            _context.SaveChanges();
+            try
+            {
+                await _context.Doctors.AddAsync(doctor);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException due)
+            {
+                _logger.LogError($"DoctorService - {nameof(AddDoctor)} - Sql query execution failed. Exception - {due.Message}");
+                throw;
+            }
+
+            return doctor.DoctorId;
         }
     }
 }

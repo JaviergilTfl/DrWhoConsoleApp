@@ -2,6 +2,9 @@ using DrWhoConsoleApp.DatabaseContext;
 using DrWhoConsoleApp.Models;
 using DrWhoConsoleApp.Services;
 using DrWhoConsoleApp.UnitTests;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
@@ -119,7 +122,6 @@ namespace UnitTests.Services
             Assert.That(logger.Logs, Has.Exactly(1).Contains(episodeText));
             Assert.That(logger.Logs, Has.Exactly(0).Contains($"Information"));
             Assert.That(logger.Logs, Has.Exactly(0).Contains($"Warning"));
-
         }
 
         [Theory, AutoDomainData]
@@ -159,6 +161,101 @@ namespace UnitTests.Services
 
             dbContext.Doctors.Contains(episode.Doctor).Equals(false);
             dbContext.Doctors.Count().Equals(0);
+        }
+
+        [Theory, AutoDomainData]
+        public async Task AddEpisode_ShouldThrowExceptionWhenFailureOccursWhileAddingData(
+            Mock<DoctorWhoContext> dbContext,
+            ListLogger<EpisodeService> logger,
+            Episode episode,
+            string exceptionMessage)
+        {
+            // Arrange
+            var sut = new EpisodeService(dbContext.Object, logger);
+            dbContext.Setup(x => x.Episodes.AddAsync(It.IsAny<Episode>(), It.IsAny<CancellationToken>()))
+                .Throws(new Exception(exceptionMessage));
+
+            // Act
+            var result = Assert.ThrowsAsync<Exception>(() => sut.AddEpisode(episode));
+
+            // Assert
+            result.Message.Should().Be(exceptionMessage);
+            dbContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            logger.Logs.Should().Contain(x => x.Contains(exceptionMessage));
+        }
+
+        [Theory, AutoDomainData]
+        public async Task AddEpisode_ShouldThrowExceptionWhenFailureOccursWhileSavingData(
+            Mock<DoctorWhoContext> dbContext,
+            ListLogger<EpisodeService> logger,
+            string exceptionMessage,
+            Episode episode)
+        {
+            // Arrange
+            var sut = new EpisodeService(dbContext.Object, logger);
+            var mockSet = new Mock<DbSet<Episode>>();
+
+            dbContext.Setup(x => x.Episodes).Returns(mockSet.Object);
+            mockSet.Setup(x => x.AddAsync(It.IsAny<Episode>(), It.IsAny<CancellationToken>()))
+                   .Returns(new ValueTask<EntityEntry<Episode>>(Task.FromResult((EntityEntry<Episode>)null)));
+            dbContext.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = Assert.ThrowsAsync<Exception>(() => sut.AddEpisode(episode));
+
+            // Assert
+            result.Message.Should().Be(exceptionMessage);
+            dbContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            logger.Logs.Should().Contain(x => x.Contains(exceptionMessage));
+        }
+
+
+        [Theory, AutoDomainData]
+        public async Task RemoveEpisode_ShouldThrowExceptionWhenFailureOccursWhileAddingData(
+            Mock<DoctorWhoContext> dbContext,
+            ListLogger<EpisodeService> logger,
+            Episode episode,
+            string exceptionMessage)
+        {
+            // Arrange
+            var sut = new EpisodeService(dbContext.Object, logger);
+            dbContext.Setup(x => x.Episodes.Remove(It.IsAny<Episode>()))
+                .Throws(new Exception(exceptionMessage));
+
+            // Act
+            var result = Assert.Throws<Exception>(() => sut.RemoveEpisode(episode));
+
+            // Assert
+            result.Message.Should().Be(exceptionMessage);
+            dbContext.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            logger.Logs.Should().Contain(x => x.Contains(exceptionMessage));
+        }
+
+        [Theory, AutoDomainData]
+        public async Task RemoveEpisode_ShouldThrowExceptionWhenFailureOccursWhileSavingData(
+            Mock<DoctorWhoContext> dbContext,
+            ListLogger<EpisodeService> logger,
+            string exceptionMessage,
+            Episode episode)
+        {
+            // Arrange
+            var sut = new EpisodeService(dbContext.Object, logger);
+            var mockSet = new Mock<DbSet<Episode>>();
+
+            dbContext.Setup(x => x.Episodes).Returns(mockSet.Object);
+            mockSet.Setup(x => x.Remove(It.IsAny<Episode>()))
+                    .Returns((EntityEntry<Episode>)null);
+            dbContext.Setup(x => x.SaveChanges())
+                .Throws(new Exception(exceptionMessage));
+
+            // Act
+            var result = Assert.Throws<Exception>(() => sut.RemoveEpisode(episode));
+
+            // Assert
+            result.Message.Should().Be(exceptionMessage);
+            dbContext.Verify(x => x.SaveChanges(), Times.Once);
+            logger.Logs.Should().Contain(x => x.Contains(exceptionMessage));
         }
     }
 }

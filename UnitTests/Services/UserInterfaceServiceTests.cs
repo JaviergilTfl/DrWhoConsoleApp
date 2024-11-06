@@ -29,7 +29,7 @@ namespace UnitTests.Services
             sut.Run();
 
             // Assert
-            mockConsoleService.Verify(x=>x.WriteLine("1. List doctors"),Times.Once);
+            mockConsoleService.Verify(x => x.WriteLine("1. List doctors"), Times.Once);
             mockConsoleService.Verify(x => x.WriteLine("2. List episodes by Year"), Times.Once);
             mockConsoleService.Verify(x => x.WriteLine("3. Add a new doctor"), Times.Once);
             mockConsoleService.Verify(x => x.WriteLine("4. Exit"), Times.Once);

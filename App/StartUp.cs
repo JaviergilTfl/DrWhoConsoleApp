@@ -38,7 +38,6 @@ namespace DrWhoConsoleApp
                     services.AddTransient<IServiceRunner, ServiceRunner>();
 
                     services.AddTransient(RegisterDbContext);
-
                     services.AddTransient<IConsoleService, ConsoleService>();
                     services.AddTransient<IDoctorService, DoctorService>();
                     services.AddTransient<IEpisodeService, EpisodeService>();
@@ -46,7 +45,7 @@ namespace DrWhoConsoleApp
                 });
         }
 
-        private static Func<IServiceProvider, IDoctorWhoContext> RegisterDbContext => provider =>
+        private static Func<IServiceProvider, DoctorWhoContext> RegisterDbContext => provider =>
         {
             string connectionString = provider.GetService<IConfiguration>().GetValue<string>(Constants.AppSettings.DbConnectionString);
 

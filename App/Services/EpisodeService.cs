@@ -9,21 +9,21 @@ namespace DrWhoConsoleApp.Services
 {
     public class EpisodeService : IEpisodeService
     {
-        private readonly IDoctorWhoContext _context;
+        private readonly DoctorWhoContext _context;
         private readonly ILogger<EpisodeService> _logger;
 
-        public EpisodeService(IDoctorWhoContext context, ILogger<EpisodeService> logger)
+        public EpisodeService(DoctorWhoContext context, ILogger<EpisodeService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
-        public void AddEpisode(Episode episode)
+        public async Task<int> AddEpisode(Episode episode)
         {
             try
             {
-                _context.Episodes.Add(episode);
-                _context.SaveChanges();
+                await _context.Episodes.AddAsync(episode);
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -32,14 +32,29 @@ namespace DrWhoConsoleApp.Services
                 var message = $"Error occurred while adding a new episode with details: {episodeText}\n" +
                     $"Error: {ex.Message}";
                 _logger.Log(LogLevel.Error, message);
+                throw;
             }
+
+            return episode.EpisodeId;
         }
 
 
         public void RemoveEpisode(Episode episode)
         {
-            _context.Episodes.Remove(episode);
-            _context.SaveChanges();
+            try
+            {
+                _context.Episodes.Remove(episode);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                var episodeText = JsonSerializer.Serialize(episode);
+
+                var message = $"Error occurred while deleting episode with details: {episodeText}\n" +
+                    $"Error: {ex.Message}";
+                _logger.Log(LogLevel.Error, message);
+                throw;
+            }
         }
 
         public IEnumerable<Episode> GetAllEpisodes()
